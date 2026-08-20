@@ -1,6 +1,6 @@
 # Microsoft Azure - Novatrix AB
 
-Namn: Ditt namn
+Namn: Gustav Honner
 Kurs: Microsoft Azure
 
 ## Vecka 34 - Uppgift 1
