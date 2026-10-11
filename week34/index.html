@@ -52,6 +52,11 @@
             border: none;
             cursor: pointer;
         }
+
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -65,21 +70,144 @@
 <main>
     <h2>Skapa ett ärende</h2>
 
-    <p>Fyll i formuläret nedan för att kontakta Novatrix AB:s kundtjänst.</p>
+    <p>
+        Fyll i formuläret nedan för att kontakta
+        Novatrix AB:s kundtjänst.
+    </p>
 
-    <form>
+    <!--
+        ID används av JavaScript för att hitta formuläret.
+    -->
+    <form id="ticketForm">
+
         <label for="name">Namn</label>
-        <input type="text" id="name" name="name">
+        <input
+            type="text"
+            id="name"
+            name="name"
+            required
+        >
 
         <label for="email">E-post</label>
-        <input type="email" id="email" name="email">
+        <input
+            type="email"
+            id="email"
+            name="email"
+            required
+        >
 
         <label for="message">Meddelande</label>
-        <textarea id="message" name="message"></textarea>
+        <textarea
+            id="message"
+            name="message"
+            required
+        ></textarea>
 
-        <button type="submit">Skicka ärende</button>
+        <button type="submit">
+            Skicka ärende
+        </button>
+
     </form>
+
+    <!--
+        Här visas information till användaren,
+        exempelvis om ärendet skickades.
+    -->
+    <p id="status"></p>
+
 </main>
+
+
+<script>
+    // Hämta formuläret från HTML-sidan
+    const form = document.getElementById("ticketForm");
+
+    // Här visar vi status till användaren
+    const statusText = document.getElementById("status");
+
+
+    // Kör denna kod när formuläret skickas
+    form.addEventListener("submit", async function(event) {
+
+        // Stoppar formulärets vanliga beteende
+        // så att sidan inte laddas om
+        event.preventDefault();
+
+
+        // Hämta värden från formuläret
+        const name =
+            document.getElementById("name").value;
+
+        const email =
+            document.getElementById("email").value;
+
+        const message =
+            document.getElementById("message").value;
+
+
+        // Skapa ett JavaScript-objekt med ärendedata
+        const ticket = {
+            name: name,
+            email: email,
+            message: message
+        };
+
+
+        // Visa status medan anropet görs
+        statusText.textContent = "Skickar ärendet...";
+
+
+        try {
+
+            // Skicka ärendet till Azure Function
+            const response = await fetch(
+                "https://func-novatrix-notify-99gushon-frb3bwfkcee5bdh8.swedencentral-01.azurewebsites.net/api/ticket",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    // Gör om JavaScript-objektet till JSON
+                    body: JSON.stringify(ticket)
+                }
+            );
+
+
+            // Läs JSON-svaret från Azure Function
+            const result = await response.json();
+
+
+            // Om Azure Function svarar med HTTP 200
+            if (response.ok) {
+
+                statusText.textContent =
+                    "Tack! Ditt ärende har skickats.";
+
+                // Töm formuläret
+                form.reset();
+
+            } else {
+
+                // Visa felmeddelandet från Function
+                statusText.textContent =
+                    result.message ||
+                    "Kunde inte skicka ärendet.";
+            }
+
+        } catch (error) {
+
+            // Detta körs exempelvis om Function
+            // inte kan nås eller CORS blockerar anropet
+            console.error(error);
+
+            statusText.textContent =
+                "Kunde inte kontakta kundtjänsten.";
+        }
+
+    });
+</script>
 
 </body>
 </html>
